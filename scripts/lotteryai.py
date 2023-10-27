@@ -4,6 +4,9 @@ import json
 import tensorflow as tf
 from tensorflow import keras
 from keras import layers
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+from scripts.scrapedata import scrape_date_from
 # from art import text2art
 
 # Function to print the introduction of the program
@@ -92,6 +95,38 @@ def print_predicted_numbers(predicted_numbers):
    # Print only the first row of predicted numbers
    print(', '.join(map(str, predicted_numbers[0])))
    print("============================================================")
+
+def check_update():
+    with open('data/output.json') as file:
+        lot_data = json.load(file)
+    
+    max_date = max(lot_data, key=lambda x: datetime.strptime(x['date'], "%A, %B %d, %Y"))['date']
+    latest_date = datetime.strptime(max_date, "%A, %B %d, %Y")
+    current_date = datetime.now()
+    return (current_date - latest_date).days, latest_date.strftime("%A, %B %d, %Y")
+
+def update_database(latest_date):
+    start_date = datetime.strptime(latest_date, "%A, %B %d, %Y") + relativedelta(days=1)
+    end_date = datetime.now()
+
+    with open('data/output.json') as file:
+        allData = json.load(file)
+
+    with open('data/area_code.json') as file:
+        area_codes = json.load(file)      
+
+    for dt in range(int((end_date - start_date).days) + 1):
+        current_date = start_date + relativedelta(days=dt)
+        for code in area_codes:
+            result = scrape_date_from(code, area_codes[code], current_date.year, 
+                                      current_date.month, current_date.day)
+            allData = np.concatenate((allData, result))
+            allData = allData.tolist()
+    
+    with open('data/output.json', 'w') as file:
+        json.dump(allData, file)
+
+    return start_date
 
 def get_prediction(area_code, title):
     # Print introduction of program 

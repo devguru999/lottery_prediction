@@ -29,5 +29,17 @@ def getPrediction():
     values = lotteryai.get_prediction(query["area_code"], query["lottery"])
     return jsonify(list(values))
 
+@app.route('/check', methods=['POST'])
+def checkForUpdates():
+    availability, latest_date = lotteryai.check_update()
+    return jsonify({"diff_days":availability, "latest_date": latest_date})
+
+@app.route('/update', methods=['POST'])
+def updateDB():
+    query = request.get_json()
+    isUpdated = lotteryai.update_database(query["latest_date"])
+    print(query)
+    return jsonify({"is_updated":isUpdated})
+
 if __name__ == '__main__':
-    app.run(debug=True,host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0')

@@ -1,5 +1,8 @@
 $(document).ready(() => {
+    $("#status").hide();
     $("#area-box").change(() => {
+        $("#status").show();
+        $("#status").text('getting lotteries ...');
         fetch('/lottery', {
             method: 'POST',
             headers: {
@@ -19,14 +22,19 @@ $(document).ready(() => {
                     value: item,
                     text: item
                 }));
-            });            
+            });   
+
+            $("#status").hide();
         })
         .catch(error => {
             console.error(error);
+            $("#status").hide();
         });
     });
 
     $("#lottery-box").change(() => {
+        $("#status").show();
+        $("#status").text('getting winning numbers ...');
         fetch('/data', {
             method: 'POST',
             headers: {
@@ -47,13 +55,17 @@ $(document).ready(() => {
                     text: JSON.stringify(item)
                 }));
             });   
+            $("#status").hide();
         })
         .catch(error => {
             console.error(error);
+            $("#status").hide();
         });
     });
 
     $("a#predict").click(() => {
+        $("#status").show();
+        $("#status").text('calculating prediction ...');
         fetch('/predict', {
             method: 'POST',
             headers: {
@@ -72,9 +84,50 @@ $(document).ready(() => {
                     text: item
                 }))
             })
+            $("#status").hide();
         })
         .catch(error => {
             console.error(error);
+            $("#status").hide();
+        });
+    });
+
+    $("a#update").click(() => {
+        $("#status").show();
+        $("#status").text('checking for updates ...');        
+        fetch('/check', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data)
+            if (data.diff_days > 0) {
+                $("#status").text('new updates available. updating now ...');       
+                fetch('/update', {
+                    method: 'POST',                    
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        latest_date: data.latest_date
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);  
+                    $("#status").hide();
+                })
+                .catch(error => {
+                    console.error(error);
+                    $("#status").hide();
+                });
+            } else {
+                $("#status").hide();
+            }
+        })
+        .catch(error => {
+            console.error(error);
+            $("#status").hide();
         });
     });
 })
